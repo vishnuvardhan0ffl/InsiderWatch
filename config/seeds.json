@@ -1,0 +1,44 @@
+{
+  "migration_cutoff": "2026-04-28T11:00:00Z",
+  "source": "Polymarket Gamma API",
+  "markets": [
+    {
+      "category": "venezuela_maduro",
+      "title": "Nicolás Maduro released from custody by January 31, 2026?",
+      "slug": "nicolas-maduro-released-from-custody-by-january-31-2026",
+      "condition_id": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+      "resolution_date": "2026-01-31T00:00:00Z"
+    },
+    {
+      "category": "nobel_prize",
+      "title": "Will María Corina Machado win the Nobel Peace Prize in 2025?",
+      "slug": "will-mara-corina-machado-win-the-nobel-peace-prize-in-2025",
+      "condition_id": "0x14a3dfeba8b22a32feb0f10763db68bc4d2abeb5bff90e9ae20de53793b35a1d",
+      "resolution_date": "2025-10-10T00:00:00Z"
+    },
+    {
+      "category": "us_iran_ceasefire",
+      "title": "US x Iran ceasefire by April 7?",
+      "slug": "us-x-iran-ceasefire-by-april-7",
+      "condition_id": "0x4c5701bcde0b8fb7d7f48c8e9d20245a6caa58c61a77f981fad98f2bfa0b1bc7",
+      "resolution_date": "2026-04-07T00:00:00Z"
+    }
+  ],
+  "control_markets": [
+    {
+      "role": "boundary_probe",
+      "note": "Live across the 28 Apr 2026 cutover. Used for the continuity test, not a case study.",
+      "title": "Strait of Hormuz traffic returns to normal by May 15?",
+      "condition_id": "0xffe381a80c1e36f9e0b03a542aa8fe56e74a67d2566a4e29396d4427aa4244c9",
+      "start_date": "2026-04-22T18:13:00Z",
+      "end_date": "2026-05-15T00:00:00Z"
+    },
+    {
+      "role": "deep_history_probe",
+      "note": "Resolved Nov 2024. Used to test maximum retrievable depth.",
+      "title": "Will Donald Trump win the 2024 US Presidential Election?",
+      "condition_id": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+      "end_date": "2024-11-05T12:00:00Z"
+    }
+  ]
+}

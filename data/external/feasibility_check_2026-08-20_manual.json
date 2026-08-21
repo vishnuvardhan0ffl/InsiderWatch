@@ -1,0 +1,225 @@
+{
+  "project": "PG-S2-55",
+  "artefact": "WS4 Test 6 — V1→V2 historical continuity, manual observation record",
+  "run_at_utc": "2026-08-20",
+  "collection_method": "HTTP GET via the session's web-fetch tool, unauthenticated, public endpoints only",
+  "provenance_warning": "These observations were captured interactively, not by verify_apis.py. Record counts reported here are counts of objects visible in the returned array as summarised by the fetch tool and MAY be affected by response truncation. Timestamps, keys and empty/non-empty verdicts are reliable; exact counts at limit>100 are NOT. This file is a provisional evidence record. Supersede it by running verify_apis.py and committing feasibility_check_<date>.json.",
+  "migration_cutoff_ts": 1777374000,
+  "migration_cutoff_iso": "2026-04-28T11:00:00Z",
+  "headline_question": "Does the Polymarket Data API return trade history predating the 28 Apr 2026 V1→V2 cutover?",
+  "headline_answer": "YES",
+
+  "test_6A_market_scoped_seed_markets": {
+    "verdict": "PASS",
+    "claim": "3/3 seed condition IDs returned trade records, all timestamped before the cutover.",
+    "observations": [
+      {
+        "category": "venezuela_maduro",
+        "condition_id": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+        "title_returned_by_api": "Nicolás Maduro released from custody by January 31, 2026?",
+        "request": "GET /trades?market=<cid>&limit=500&takerOnly=false",
+        "records_visible": 100,
+        "min_ts": 1769773608,
+        "min_iso": "2026-01-30T11:46:48Z",
+        "max_ts": 1769931488,
+        "max_iso": "2026-02-01T07:38:08Z",
+        "all_records_pre_migration": true,
+        "schema_complete": true
+      },
+      {
+        "category": "nobel_prize",
+        "condition_id": "0x14a3dfeba8b22a32feb0f10763db68bc4d2abeb5bff90e9ae20de53793b35a1d",
+        "title_returned_by_api": "Will María Corina Machado win the Nobel Peace Prize in 2025?",
+        "request": "GET /trades?market=<cid>&limit=500&takerOnly=false",
+        "records_visible": 100,
+        "min_ts": 1760091208,
+        "min_iso": "2025-10-10T10:13:28Z",
+        "max_ts": 1760097956,
+        "max_iso": "2025-10-10T12:05:56Z",
+        "all_records_pre_migration": true,
+        "schema_complete": true,
+        "depth_probe": {
+          "request": "GET /trades?market=<cid>&start=1&end=1756684800&limit=100&takerOnly=false",
+          "records_visible": 100,
+          "min_ts": 1756431133,
+          "min_iso": "2025-08-29T00:12:13Z",
+          "note": "Trades retrievable from ~6 weeks before the announcement, i.e. the full pre-announcement window this case study needs."
+        }
+      },
+      {
+        "category": "us_iran_ceasefire",
+        "condition_id": "0x4c5701bcde0b8fb7d7f48c8e9d20245a6caa58c61a77f981fad98f2bfa0b1bc7",
+        "title_returned_by_api": "US x Iran ceasefire by April 7?",
+        "request": "GET /trades?market=<cid>&limit=500&takerOnly=false",
+        "records_visible": 100,
+        "min_ts": 1775866171,
+        "min_iso": "2026-04-11T00:09:31Z",
+        "max_ts": 1775867401,
+        "max_iso": "2026-04-11T00:30:01Z",
+        "all_records_pre_migration": true,
+        "schema_complete": true
+      }
+    ],
+    "schema_observed": [
+      "proxyWallet", "side", "asset", "conditionId", "size", "price", "timestamp",
+      "title", "slug", "icon", "eventSlug", "outcome", "outcomeIndex", "name",
+      "pseudonym", "bio", "profileImage", "profileImageOptimized", "transactionHash"
+    ],
+    "schema_note": "Identical field set on pre-migration and post-migration records. No V1/V2 schema divergence observed. transactionHash is present on pre-migration records, so on-chain cross-referencing of V1-era trades remains possible."
+  },
+
+  "test_6B_boundary_continuity": {
+    "verdict": "PASS",
+    "probe_market": {
+      "condition_id": "0xffe381a80c1e36f9e0b03a542aa8fe56e74a67d2566a4e29396d4427aa4244c9",
+      "title": "Strait of Hormuz traffic returns to normal by May 15?",
+      "start_date": "2026-04-22T18:13:00Z",
+      "end_date": "2026-05-15T00:00:00Z",
+      "why_chosen": "Opened 6 days before the cutover and ran 17 days past it, so one conditionId spans both contract eras."
+    },
+    "window_before_cutover": {
+      "request": "GET /trades?market=<probe>&start=1777330000&end=1777374000&limit=100&takerOnly=false",
+      "records_visible": 100,
+      "min_ts": 1777369660,
+      "min_iso": "2026-04-28T09:47:40Z",
+      "max_ts": 1777373926,
+      "max_iso": "2026-04-28T10:58:46Z",
+      "note": "Dense trading right up to the final minutes before the 11:00 UTC cutover."
+    },
+    "window_after_cutover": {
+      "request": "GET /trades?market=<probe>&start=1777374000&end=1777460400&limit=100&takerOnly=false",
+      "records_visible": 100,
+      "min_ts": 1777455604,
+      "min_iso": "2026-04-29T09:40:04Z",
+      "max_ts": 1777460342,
+      "max_iso": "2026-04-29T10:59:02Z"
+    },
+    "conclusion": "The same conditionId returns trades on both sides of the cutover. No discontinuity at the boundary."
+  },
+
+  "test_6B2_wallet_identity_stability": {
+    "verdict": "PASS",
+    "closes_open_question": "WS4 §6 open question 7 — are proxyWallet values stable across the V2 migration?",
+    "wallet": "0x07d126ea6f8542a58ee2c4c7c31535dd9b3e8ffa",
+    "pre_migration": {
+      "request": "GET /trades?user=<w>&start=1&end=1777374000&limit=50&takerOnly=false",
+      "records_visible": 50,
+      "min_ts": 1777326794,
+      "min_iso": "2026-04-27T21:53:14Z",
+      "max_ts": 1777373992,
+      "max_iso": "2026-04-28T10:59:52Z"
+    },
+    "post_migration": {
+      "request": "GET /trades?user=<w>&start=1777374000&limit=50&takerOnly=false",
+      "records_visible": 40,
+      "min_ts": 1787064042,
+      "min_iso": "2026-08-18T14:40:42Z",
+      "max_ts": 1787237302,
+      "max_iso": "2026-08-20T14:48:22Z"
+    },
+    "conclusion": "The same proxyWallet address returns trades in both contract eras. Trader-level features can be computed across the boundary without an identity join.",
+    "caveat": "Single wallet observed. verify_apis.py samples five; run it before treating this as general."
+  },
+
+  "test_6C_activity_and_pnl_coverage": {
+    "verdict": "PASS",
+    "activity_pre_migration": {
+      "wallet": "0x07d126ea6f8542a58ee2c4c7c31535dd9b3e8ffa",
+      "request": "GET /activity?user=<w>&start=1&end=1777374000&limit=100&excludeDepositsWithdrawals=false",
+      "records_visible": 100,
+      "min_ts": 1777323024,
+      "max_ts": 1777373992,
+      "type_counts": {"TRADE": 93, "REDEEM": 6, "YIELD": 1}
+    },
+    "activity_post_migration": {
+      "request": "GET /activity?user=<w>&start=1777374000&limit=100&excludeDepositsWithdrawals=false",
+      "records_visible": 100,
+      "min_ts": 1786577443,
+      "max_ts": 1787237302,
+      "type_counts": {"TRADE": 89, "REDEEM": 10, "DEPOSIT": 1}
+    },
+    "activity_deep_history": {
+      "wallet": "0x2268e2372c22f71dae49fad811389a7a933d5f0f",
+      "request": "GET /activity?user=<w>&start=1&limit=100",
+      "records_visible": 10,
+      "min_ts": 1760097742,
+      "min_iso": "2025-10-10T12:02:22Z",
+      "type_counts": {"TRADE": 10},
+      "schema_observed": [
+        "proxyWallet", "timestamp", "conditionId", "type", "size", "usdcSize",
+        "transactionHash", "price", "asset", "side", "outcomeIndex", "title",
+        "slug", "icon", "eventSlug", "outcome", "name", "pseudonym", "bio",
+        "profileImage", "profileImageOptimized"
+      ]
+    },
+    "closed_positions_deep_history": {
+      "wallet": "0xd53d94afcb32eb1db663118e5f830b48d83808ee",
+      "request": "GET /closed-positions?user=<w>&limit=50",
+      "records_visible": 1,
+      "record": {
+        "conditionId": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+        "title": "Will Donald Trump win the 2024 US Presidential Election?",
+        "avgPrice": 0.5349,
+        "totalBought": 94.3738,
+        "realizedPnl": 43.8839,
+        "endDate": "2024-11-05",
+        "timestamp": 1730906261,
+        "iso": "2024-11-06T15:17:41Z"
+      },
+      "conclusion": "Realised P&L is served for a position closed 18 months before the cutover. The profitability features in the brief are obtainable for pre-migration cases."
+    },
+    "null_result_worth_recording": {
+      "wallet": "0x2268e2372c22f71dae49fad811389a7a933d5f0f",
+      "request": "GET /closed-positions?user=<w>&limit=50",
+      "result": "empty array",
+      "interpretation": "Not evidence of missing history. This wallet's positions resolved worthless or were never closed as tracked. Do not treat an empty closed-positions array as an API limitation."
+    }
+  },
+
+  "test_6D_scope_trap": {
+    "verdict": "FINDING — collector-affecting",
+    "claim": "start/end appear to be IGNORED on an unscoped /trades call, but honoured when user= or market= is supplied.",
+    "unscoped_call": {
+      "request": "GET /trades?start=1730000000&end=1730100000&limit=5&takerOnly=false",
+      "expected_max_ts": 1730100000,
+      "observed_ts": 1787239075,
+      "observed_iso": "2026-08-20T15:17:55Z",
+      "window_honoured": false
+    },
+    "unscoped_call_second_window": {
+      "request": "GET /trades?start=1777280000&end=1777374000&limit=20&takerOnly=false",
+      "observed_ts": 1787239053,
+      "window_honoured": false,
+      "note": "A second, different window returned the same current-day trades, so this is not a caching artefact."
+    },
+    "scoped_control": {
+      "request": "GET /trades?market=0xdd22472e...&start=1730000000&end=1730100000&limit=5&takerOnly=false",
+      "observed_max_ts": 1730100000,
+      "observed_iso": "2024-10-28T05:20:00Z",
+      "window_honoured": true
+    },
+    "consequence": "Any historical collector call MUST carry user= or market=. Walking the global feed by time window silently returns current data. Add this to the data dictionary and to code review.",
+    "confidence": "Two observations, one control. Re-test with verify_apis.py before writing it into the report."
+  },
+
+  "unresolved": [
+    {
+      "id": "U1",
+      "question": "Is limit honoured above 100? Documentation states max 10000; every limit=500 request here surfaced exactly 100 objects.",
+      "why_it_matters": "Determines whether pagination is by offset, by time window, or both.",
+      "how_to_settle": "verify_apis.py test 7 — compare len(response) for limit=100 / 500 / 1000 on a high-volume market."
+    },
+    {
+      "id": "U2",
+      "question": "takerOnly=true vs false record-count differential on pre-migration markets.",
+      "why_it_matters": "The default silently drops maker-side fills and biases position reconstruction (risk R4).",
+      "how_to_settle": "verify_apis.py test 7."
+    },
+    {
+      "id": "U3",
+      "question": "Maximum retrievable depth. Confirmed back to 2024-10-28 via market scope; the documented ~3-year default floor was not probed to its limit.",
+      "why_it_matters": "Bounds the control-cohort sampling frame.",
+      "how_to_settle": "Binary-search start/end on a 2023-era market."
+    }
+  ]
+}

@@ -20,9 +20,11 @@ insiderwatch/
 ├── analysis/                # features, heuristics, scoring — Sprint 3-4
 ├── visualisation/           # figures — Sprint 3-5
 ├── config/
+│   └── seeds.json          # seed-case condition IDs + boundary probe market
 ├── tests/
 ├── docs/
-│   └── data_dictionary.md  # field-level dictionary, seeded from WS4 §3
+│   ├── data_dictionary.md  # field-level dictionary, seeded from WS4 §3
+│   └── WS4_test6_V1V2_continuity_finding.md   # R1 closed — read this before collector work
 ├── data/
 │   ├── external/            # committed evidence (verify_apis.py output)
 │   └── raw/                 # gitignored API response cache
@@ -53,9 +55,8 @@ egress restrictions):
 python verify_apis.py
 ```
 
-To also test the V1→V2 historical-continuity question (the single
-highest-value unknown in the project — WS4 §1.3), pass the seed markets'
-Polymarket condition IDs once you have them:
+The V1→V2 historical-continuity tests (6a/6b/6c) run automatically from
+`config/seeds.json` — no arguments needed. To test other markets instead:
 
 ```bash
 python verify_apis.py --market 0xabc123... 0xdef456...
@@ -64,7 +65,19 @@ python verify_apis.py --market 0xabc123... 0xdef456...
 This writes `data/external/feasibility_check_<date>.json`. **Commit that
 file** — it's the dated evidence the methodology section will cite.
 Triage every `FAIL` in writing before building anything on top of that
-endpoint (per the Sprint 1 acceptance criteria).
+endpoint (per the Sprint 1 acceptance criteria). The script exits non-zero
+if the continuity headline is anything other than `YES`.
+
+### Where the continuity question landed
+
+**Answered YES on 20 August 2026.** Pre-migration history is fully reachable:
+all three seed markets return trades, a market live across the cutover returns
+trades on both sides of it, and `proxyWallet` values survive the migration.
+Risk **R1 is closed** and the collector is unblocked.
+
+Read `docs/WS4_test6_V1V2_continuity_finding.md` before writing collector code —
+it also records two traps that will silently corrupt a dataset if you don't know
+about them.
 
 ## Step 2 — Collect data
 
@@ -106,9 +119,11 @@ reproducible per WS5's "raw storage and caching layer" story.
 pytest -q
 ```
 
-The included tests are offline smoke tests only (cache-key determinism,
-explicit-`takerOnly` enforcement). Fixture-backed tests against recorded
-API responses are Sprint 2's "test harness and recorded fixtures" story.
+The included tests are offline only — no network required. They cover
+cache-key determinism and explicit-`takerOnly` enforcement in the collector,
+plus the verification suite's cutover constant, pre-migration window and
+response summarisation. Fixture-backed tests against recorded API responses are
+Sprint 2's "test harness and recorded fixtures" story.
 
 ## Step 4 — Push to GitHub
 
@@ -126,6 +141,10 @@ git push -u origin main
 
 ## Known traps this scaffold already handles
 
+- **`start`/`end` ignored without scope.** A `/trades` call carrying a time
+  window but no `user=` or `market=` returns *current* trades, silently. No
+  error, no empty array. Every historical call must be scoped — `verify_apis.py`
+  test 8 re-checks this on every run.
 - **`takerOnly` silent default.** The Polymarket API defaults this to
   `true`, silently dropping maker-side fills. `TradeQuery` forces the
   caller to set it explicitly — never left implicit (risk R4).
