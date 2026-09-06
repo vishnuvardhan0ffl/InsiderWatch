@@ -1,0 +1,741 @@
+{
+  "source": "Polymarket Data API",
+  "endpoint": "/trades",
+  "market": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+  "user": null,
+  "takerOnly": false,
+  "start": 1735689600,
+  "end": 1777373999,
+  "pagination_method": "time-window + offset + recursive window splitting",
+  "initial_window_seconds": 604800,
+  "page_limit": 500,
+  "offset_cap": 10000,
+  "request_count": 90,
+  "window_split_count": 0,
+  "raw_records_received": 11620,
+  "duplicates_removed": 32,
+  "final_trade_count": 11588,
+  "duplicate_detection_pass": false,
+  "request_log": [
+    {
+      "type": "request",
+      "start": 1735689600,
+      "end": 1736294399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1736294400,
+      "end": 1736899199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1736899200,
+      "end": 1737503999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1737504000,
+      "end": 1738108799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1738108800,
+      "end": 1738713599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1738713600,
+      "end": 1739318399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1739318400,
+      "end": 1739923199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1739923200,
+      "end": 1740527999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1740528000,
+      "end": 1741132799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1741132800,
+      "end": 1741737599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1741737600,
+      "end": 1742342399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1742342400,
+      "end": 1742947199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1742947200,
+      "end": 1743551999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1743552000,
+      "end": 1744156799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1744156800,
+      "end": 1744761599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1744761600,
+      "end": 1745366399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1745366400,
+      "end": 1745971199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1745971200,
+      "end": 1746575999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1746576000,
+      "end": 1747180799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1747180800,
+      "end": 1747785599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1747785600,
+      "end": 1748390399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1748390400,
+      "end": 1748995199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1748995200,
+      "end": 1749599999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1749600000,
+      "end": 1750204799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1750204800,
+      "end": 1750809599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1750809600,
+      "end": 1751414399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1751414400,
+      "end": 1752019199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1752019200,
+      "end": 1752623999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1752624000,
+      "end": 1753228799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1753228800,
+      "end": 1753833599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1753833600,
+      "end": 1754438399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1754438400,
+      "end": 1755043199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1755043200,
+      "end": 1755647999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1755648000,
+      "end": 1756252799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1756252800,
+      "end": 1756857599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1756857600,
+      "end": 1757462399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1757462400,
+      "end": 1758067199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1758067200,
+      "end": 1758671999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1758672000,
+      "end": 1759276799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1759276800,
+      "end": 1759881599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1759881600,
+      "end": 1760486399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1760486400,
+      "end": 1761091199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1761091200,
+      "end": 1761695999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1761696000,
+      "end": 1762300799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1762300800,
+      "end": 1762905599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1762905600,
+      "end": 1763510399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1763510400,
+      "end": 1764115199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1764115200,
+      "end": 1764719999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1764720000,
+      "end": 1765324799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1765324800,
+      "end": 1765929599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1765929600,
+      "end": 1766534399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1766534400,
+      "end": 1767139199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1767139200,
+      "end": 1767743999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767139200,
+      "end": 1767743999,
+      "offset": 500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767139200,
+      "end": 1767743999,
+      "offset": 1000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767139200,
+      "end": 1767743999,
+      "offset": 1500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767139200,
+      "end": 1767743999,
+      "offset": 2000,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 1000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 1500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 2000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1767744000,
+      "end": 1768348799,
+      "offset": 2500,
+      "limit": 500,
+      "records_received": 345
+    },
+    {
+      "type": "request",
+      "start": 1768348800,
+      "end": 1768953599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768348800,
+      "end": 1768953599,
+      "offset": 500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768348800,
+      "end": 1768953599,
+      "offset": 1000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768348800,
+      "end": 1768953599,
+      "offset": 1500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768348800,
+      "end": 1768953599,
+      "offset": 2000,
+      "limit": 500,
+      "records_received": 386
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 1000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 1500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 2000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 2500,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 3000,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1768953600,
+      "end": 1769558399,
+      "offset": 3500,
+      "limit": 500,
+      "records_received": 257
+    },
+    {
+      "type": "request",
+      "start": 1769558400,
+      "end": 1770163199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 500
+    },
+    {
+      "type": "request",
+      "start": 1769558400,
+      "end": 1770163199,
+      "offset": 500,
+      "limit": 500,
+      "records_received": 132
+    },
+    {
+      "type": "request",
+      "start": 1770163200,
+      "end": 1770767999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1770768000,
+      "end": 1771372799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1771372800,
+      "end": 1771977599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1771977600,
+      "end": 1772582399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1772582400,
+      "end": 1773187199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1773187200,
+      "end": 1773791999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1773792000,
+      "end": 1774396799,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1774396800,
+      "end": 1775001599,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1775001600,
+      "end": 1775606399,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1775606400,
+      "end": 1776211199,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1776211200,
+      "end": 1776815999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    },
+    {
+      "type": "request",
+      "start": 1776816000,
+      "end": 1777373999,
+      "offset": 0,
+      "limit": 500,
+      "records_received": 0
+    }
+  ]
+}
