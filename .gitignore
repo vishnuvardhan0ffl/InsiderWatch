@@ -8,3 +8,4 @@ data/raw/
 .pytest_cache/
 .DS_Store
 _to_delete/
+.ipynb_checkpoints/

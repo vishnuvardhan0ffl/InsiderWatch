@@ -3,9 +3,15 @@
 **PG-S2-55 — Someone Always Knows: An Analysis of Insider Trading on Polymarket / Kalshi**
 
 Sprint 1/2 starting scaffold: WS4 API verification suite, repository
-structure, and starter collectors for the Polymarket Data API and the
-Kalshi Trade API v2. See `WS4_data_feasibility.md`, `PG-S2-55_project_plan.md`
-and `PG-S2-55_jira_backlog.md` for the full plan this was built from.
+structure, and the collector for the Polymarket Data API. See
+`WS4_data_feasibility.md`, `PG-S2-55_project_plan.md` and
+`PG-S2-55_jira_backlog.md` for the full plan this was built from.
+
+Kalshi is descoped. Its public trade schema carries no counterparty
+identifier of any kind (WS4 §4), so trader-level work was never possible
+there; the collector has been removed rather than left as dead code. The
+WS4 evidence for that finding stays in `verify_apis.py` (tests 4 and 5) and
+`docs/data_dictionary.md`, because the decision rests on it.
 
 ## What's here
 
@@ -14,7 +20,10 @@ insiderwatch/
 ├── verify_apis.py          # WS4 verification suite — run this FIRST
 ├── collectors/
 │   ├── polymarket.py       # /trades, /activity, /closed-positions
-│   └── kalshi.py           # /markets/trades (market-level only, no identity field)
+│   ├── cache.py            # raw response storage — see docs/caching_layer.md
+│   └── session.py          # pacing and retries, outside the cache
+├── analysis/
+│   └── pagination_validation.ipynb
 ├── cli/                    # CLI skeleton — Sprint 2 story
 ├── processing/              # cleaning/normalisation — Sprint 3 story
 ├── analysis/                # features, heuristics, scoring — Sprint 3-4
@@ -48,8 +57,8 @@ Sprint 5 on-chain spike only.
 ## Step 1 — Run the API verification suite
 
 This is Sprint 1's highest-priority story. It must be run from a normal
-network connection (unauthenticated Polymarket/Kalshi endpoints, no
-egress restrictions):
+network connection (unauthenticated public endpoints, no egress
+restrictions):
 
 ```bash
 python verify_apis.py
@@ -87,7 +96,7 @@ skeleton with fetch commands"). Example — Polymarket trades for one
 market, one week:
 
 ```python
-from collectors.polymarket import fetch_trades, TradeQuery
+from collectors.polymarket import collect_trades, TradeQuery
 import time
 
 query = TradeQuery(
@@ -96,22 +105,23 @@ query = TradeQuery(
     start=int(time.time()) - 7 * 86400,
     end=int(time.time()),
 )
-trades = list(fetch_trades(query))
+trades, metadata = collect_trades(query)
 print(f"{len(trades)} trades")
 ```
 
-Kalshi market trades:
+`fetch_trades(query)` is the iterator-shaped wrapper around the same call.
 
-```python
-from collectors.kalshi import fetch_trades
+The collector goes through the caching layer (`collectors/cache.py`),
+which saves every response under `data/raw/` (gitignored) byte-for-byte, beside
+a metadata file recording the URL, parameters, retrieval time and a SHA-256 of
+the body. A repeated run makes zero network calls, and the saved file is
+citable evidence of what the API returned on a given date — this is what makes
+the pipeline reproducible per WS5's "raw storage and caching layer" story.
 
-trades = list(fetch_trades(ticker="KXSOMETICKER"))
-print(f"{len(trades)} trades")
-```
-
-Both collectors cache every response under `data/raw/` (gitignored) so a
-repeated run makes zero network calls — this is what makes the pipeline
-reproducible per WS5's "raw storage and caching layer" story.
+To point the cache somewhere else, set `INSIDERWATCH_CACHE_DIR` or pass a path
+to `ResponseCache(...)`. To replay a frozen dataset with no network access at
+all, pass `offline=True` — anything not already collected raises `CacheMiss`
+rather than quietly downloading fresh data. See `docs/caching_layer.md`.
 
 ## Step 3 — Run tests
 
@@ -119,11 +129,21 @@ reproducible per WS5's "raw storage and caching layer" story.
 pytest -q
 ```
 
-The included tests are offline only — no network required. They cover
-cache-key determinism and explicit-`takerOnly` enforcement in the collector,
-plus the verification suite's cutover constant, pre-migration window and
-response summarisation. Fixture-backed tests against recorded API responses are
-Sprint 2's "test harness and recorded fixtures" story.
+The included tests are offline only — no network required. They cover the
+caching layer, the collector's wiring into it (including that a repeated
+collection makes no requests), window pagination and offset-cap splitting,
+explicit-`takerOnly` enforcement, and the verification suite's cutover
+constant, pre-migration window and response summarisation. Fixture-backed tests against recorded API responses
+are Sprint 2's "test harness and recorded fixtures" story.
+
+To demonstrate the caching layer against the **live** API and write dated
+evidence for it:
+
+```bash
+python verify_cache.py
+```
+
+This writes `data/external/cache_check_<date>.json`. **Commit that file.**
 
 ## Step 4 — Push to GitHub
 
@@ -149,12 +169,13 @@ git push -u origin main
   `true`, silently dropping maker-side fills. `TradeQuery` forces the
   caller to set it explicitly — never left implicit (risk R4).
 - **Offset caps.** `/trades` caps `offset` at 10,000, `/activity` at
-  5,000. Both collectors paginate by time window, not offset alone, and
-  the trades collector shrinks its window automatically if a window is
-  too dense to fit under the cap.
-- **No identity field on Kalshi.** The Kalshi collector is intentionally
-  market-level only — there is no wallet/user/account field in the
-  schema to collect (WS4 §4).
+  5,000. The collector paginates by time window, not offset alone, and
+  shrinks its window automatically if a window is too dense to fit under
+  the cap.
+- **No identity field on Kalshi.** There is no wallet/user/account field
+  anywhere in the public Kalshi trade schema (WS4 §4), which is why Kalshi
+  is descoped rather than collected. Do not reintroduce a Kalshi collector
+  without a scope decision recorded first.
 
 ## Not yet built (see the Sprint backlog)
 

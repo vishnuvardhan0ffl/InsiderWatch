@@ -10,22 +10,21 @@ Features
 3. Automatic window splitting when the 10,000 offset cap is reached.
 4. Explicit takerOnly handling.
 5. Duplicate removal.
-6. JSON caching.
-7. Rate limiting and retry handling.
+6. Raw response caching (collectors/cache.py).
+7. Rate limiting and retry handling (collectors/session.py).
 8. Metadata recording.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
-import time
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, Optional
 
-import requests
+from collectors.cache import CachedClient, ResponseCache
+from collectors.session import ThrottledRetryingSession
 
 
 # ============================================================
@@ -34,11 +33,10 @@ import requests
 
 BASE_URL = "https://data-api.polymarket.com"
 
-CACHE_DIR = Path("data/raw/polymarket/cache")
-
+# Minimum gap between requests, handed to the session. Well under the
+# documented ceiling of 200 req/10s on /trades (WS4 section 3.3); caching,
+# not throttling, is what keeps our request count low.
 MIN_INTERVAL_S = 0.3
-
-_last_call = 0.0
 
 
 # API offset limits
@@ -56,164 +54,126 @@ DEFAULT_WINDOW_S = 7 * 86400
 
 
 # ============================================================
-# Rate limiting
+# Transport and storage
 # ============================================================
+#
+# Both used to live in this file: a _throttle() on a module global, a
+# _cache_key() that hashed the parameters, and a _get() that wrote the
+# *parsed* body back out with json.dumps.
+#
+# That cache could not be cited as evidence. It stored a re-serialised copy
+# rather than the bytes the API sent, and recorded nothing about when the
+# request was made, so "the API returned this on that date" had nothing
+# behind it. Raw storage with a retrieval timestamp is the whole point of
+# the WS5 caching story.
+#
+# Storage now lives in collectors/cache.py and transport in
+# collectors/session.py. _get keeps its name, its signature and its
+# behaviour, so every caller below and every existing test is untouched -
+# only the internals changed. What is new is what lands on disk: the exact
+# response bytes, a metadata file recording the URL, parameters, retrieval
+# time and a SHA-256 of the body, and a line in data/raw/index.jsonl.
+#
+# See docs/caching_layer.md.
 
-def _throttle():
+DEFAULT_RETRIES = 5
+
+_default_client: Optional[CachedClient] = None
+
+
+def default_client() -> CachedClient:
     """
-    Keep requests comfortably below the API rate limit.
+    The client _get uses. Built on first use rather than at import, so
+    importing this module never opens a session or touches the cache
+    directory.
+
+    The cache location comes from ResponseCache: data/raw by default,
+    overridable with INSIDERWATCH_CACHE_DIR.
     """
 
-    global _last_call
+    global _default_client
 
-    elapsed = time.monotonic() - _last_call
+    if _default_client is None:
 
-    if elapsed < MIN_INTERVAL_S:
-        time.sleep(MIN_INTERVAL_S - elapsed)
+        _default_client = CachedClient(
+            BASE_URL,
+            cache=ResponseCache(),
+            session=ThrottledRetryingSession(
+                retries=DEFAULT_RETRIES,
+                min_interval_s=MIN_INTERVAL_S
+            ),
+        )
 
-    _last_call = time.monotonic()
+    return _default_client
 
 
-# ============================================================
-# Cache
-# ============================================================
-
-def _cache_key(endpoint: str, params: dict) -> Path:
+def set_default_client(
+    client: Optional[CachedClient]
+) -> Optional[CachedClient]:
     """
-    Generate a deterministic cache filename from the endpoint
-    and request parameters.
+    Point the module at a different client, or pass None to reset it.
+
+    Used by the CLI to select a cache directory or offline mode, and by
+    tests to substitute a fake session.
     """
 
-    raw = json.dumps(
-        {
-            "endpoint": endpoint,
-            "params": params
-        },
-        sort_keys=True
+    global _default_client
+
+    _default_client = client
+
+    return _default_client
+
+
+def _client_for(retries: int) -> CachedClient:
+    """
+    The shared client, unless a caller asked for a different retry budget -
+    in which case a one-off client with the same cache directory.
+    """
+
+    if retries == DEFAULT_RETRIES:
+        return default_client()
+
+    return CachedClient(
+        BASE_URL,
+        cache=ResponseCache(),
+        session=ThrottledRetryingSession(
+            retries=retries,
+            min_interval_s=MIN_INTERVAL_S
+        ),
     )
 
-    digest = hashlib.sha256(
-        raw.encode()
-    ).hexdigest()[:24]
-
-    return (
-        CACHE_DIR
-        / endpoint.strip("/")
-        / f"{digest}.json"
-    )
-
-
-# ============================================================
-# HTTP request helper
-# ============================================================
 
 def _get(
     endpoint: str,
     params: dict,
     use_cache: bool = True,
-    retries: int = 5
+    retries: int = DEFAULT_RETRIES
 ):
     """
     Perform a GET request with:
 
-    - caching
+    - raw caching, keyed by endpoint and parameters
     - throttling
     - retry handling
     - exponential backoff
+
+    use_cache=False forces a fresh request. The response is still written
+    to the cache: the caller's intent is "re-fetch", not "do not record",
+    and a gap in the raw store is a gap in the run's evidence trail.
+
+    Only successful responses are stored. A cached 429 or 500 page would be
+    replayed forever as though it were data.
+
+    Raises UnscopedRequestError on a /trades or /activity call carrying no
+    user, market or eventId. Such a call ignores start and end and returns
+    current trades with no error (WS4 test 8), which would fill a
+    time-windowed collection with today's data while looking healthy.
     """
 
-    cache_path = _cache_key(
+    return _client_for(retries).get_json(
         endpoint,
-        params
-    )
-
-    # --------------------------------------------------------
-    # Return cached request if available
-    # --------------------------------------------------------
-
-    if use_cache and cache_path.exists():
-
-        return json.loads(
-            cache_path.read_text(
-                encoding="utf-8"
-            )
-        )
-
-    url = f"{BASE_URL}{endpoint}"
-
-    backoff = 1.0
-
-    # --------------------------------------------------------
-    # API request
-    # --------------------------------------------------------
-
-    for attempt in range(retries):
-
-        _throttle()
-
-        try:
-
-            response = requests.get(
-                url,
-                params=params,
-                timeout=20
-            )
-
-        except requests.RequestException:
-
-            if attempt == retries - 1:
-                raise
-
-            time.sleep(backoff)
-
-            backoff *= 2
-
-            continue
-
-        # ----------------------------------------------------
-        # Retry rate-limit and server errors
-        # ----------------------------------------------------
-
-        if (
-            response.status_code == 429
-            or response.status_code >= 500
-        ):
-
-            if attempt == retries - 1:
-
-                response.raise_for_status()
-
-            time.sleep(backoff)
-
-            backoff *= 2
-
-            continue
-
-        response.raise_for_status()
-
-        body = response.json()
-
-        # ----------------------------------------------------
-        # Save successful response to cache
-        # ----------------------------------------------------
-
-        if use_cache:
-
-            cache_path.parent.mkdir(
-                parents=True,
-                exist_ok=True
-            )
-
-            cache_path.write_text(
-                json.dumps(body),
-                encoding="utf-8"
-            )
-
-        return body
-
-    raise RuntimeError(
-        f"Exhausted retries for "
-        f"{endpoint} {params}"
+        params,
+        refresh=not use_cache
     )
 
 
