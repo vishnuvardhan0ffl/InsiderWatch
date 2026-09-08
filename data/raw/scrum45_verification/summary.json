@@ -1,0 +1,13 @@
+{
+  "wallet": "0xd99f3bec8e060ada0aef0c4057695dd5bc22fcdc",
+  "first_activity_timestamp": 1774998933,
+  "funding_event_count": 164,
+  "total_deposited": 36530318.723678,
+  "total_withdrawn": 41744170.067890994,
+  "funding_mapping_confirmed": true,
+  "closed_position_count": 54,
+  "positions_missing_pnl": 0,
+  "activity_record_count": 7374,
+  "window_split_count": 0,
+  "duplicates_removed": 31
+}
