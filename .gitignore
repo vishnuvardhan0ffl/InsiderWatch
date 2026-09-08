@@ -9,3 +9,4 @@ data/raw/
 .DS_Store
 _to_delete/
 .ipynb_checkpoints/
+data/raw/polymarket/cache/
