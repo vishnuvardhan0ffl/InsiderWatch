@@ -47,12 +47,19 @@ class ThrottledRetryingSession:
         self._session = requests.Session()
         self.retries = retries
         self.min_interval_s = min_interval_s
-        self._last_call = 0.0
+
+        # None, not 0.0: "no request yet" is not the same as "a request at
+        # time zero". time.monotonic() counts from an arbitrary point, so on a
+        # freshly booted machine 0.0 is a plausible reading and the very first
+        # request would pause for no reason.
+        self._last_call = None
 
     def _throttle(self):
-        elapsed = time.monotonic() - self._last_call
-        if elapsed < self.min_interval_s:
-            time.sleep(self.min_interval_s - elapsed)
+        if self._last_call is not None:
+            elapsed = time.monotonic() - self._last_call
+            if elapsed < self.min_interval_s:
+                time.sleep(self.min_interval_s - elapsed)
+
         self._last_call = time.monotonic()
 
     def get(self, url, params=None, timeout=None):
