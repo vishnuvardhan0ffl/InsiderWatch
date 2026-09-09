@@ -1,0 +1,5 @@
+{
+  "status_code": 429,
+  "body": "{\"error\":\"rate limit exceeded\"}",
+  "why_this_exists": "The collector must retry a 429 and must never write it to the cache. A cached error page would be replayed as though it were data for the rest of the project. This fixture is what those two tests are fed."
+}

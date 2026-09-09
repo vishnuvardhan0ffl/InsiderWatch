@@ -1,0 +1,26 @@
+[
+  {
+    "proxyWallet": "0x2e8b47278034b56d484e129d54b27ca3614f55dc",
+    "asset": "84555943322776311134517583824422278399141557002150361569199441024127478612244",
+    "conditionId": "0x63a7735ed1d3be1576be10eed26e59e2c22794a721e42e85812930844a808ad7",
+    "size": 120.5,
+    "avgPrice": 0.34,
+    "curPrice": 0.61,
+    "currentValue": 73.505,
+    "cashPnl": 32.535,
+    "percentPnl": 79.41,
+    "redeemable": false
+  },
+  {
+    "proxyWallet": "0xc4c862cd95bc6bd42fc2553353646cd6697e4fc8",
+    "asset": "58327070564391558679434548375785613597479719440974519810456747728290891525883",
+    "conditionId": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+    "size": 4000.0,
+    "avgPrice": 0.021,
+    "curPrice": 0.0,
+    "currentValue": 0.0,
+    "cashPnl": -84.0,
+    "percentPnl": -100.0,
+    "redeemable": true
+  }
+]

@@ -11,9 +11,9 @@ go through the cache, and that a repeated collection therefore makes no
 requests. That is the WS5 acceptance criterion, exercised through the
 collector rather than asserted about it.
 
-Window-pagination behaviour is tests/test_trade_pagination.py.
-Fixture-backed tests against recorded API responses belong in Sprint 2's
-"Set up the test harness and recorded fixtures" story.
+The fake API lives in tests/conftest.py, shared with every other test file.
+Window-pagination behaviour is tests/test_trade_pagination.py; the recorded
+fixtures are tests/test_fixtures.py.
 """
 
 import json
@@ -21,92 +21,30 @@ import json
 import pytest
 
 from collectors import polymarket
-from collectors.cache import (
-    CachedClient,
-    ResponseCache,
-    UnscopedRequestError,
-    build_cache_key,
-)
+from collectors.cache import UnscopedRequestError, build_cache_key
 from collectors.polymarket import TradeQuery
-
-
-ONE_TRADE = json.dumps([
-    {
-        "proxyWallet": "0x07d126ea",
-        "side": "BUY",
-        "size": 1200,
-        "price": 0.34,
-        "timestamp": 50,
-        "transactionHash": "0xaaa",
-        "conditionId": "0xabc",
-    }
-]).encode()
-
-
-class FakeResponse:
-    def __init__(self, body):
-        self.content = body
-        self.status_code = 200
-        self.url = "https://fake-api/trades"
-
-    def raise_for_status(self):
-        pass
-
-
-class FakeSession:
-    """Answers the first request with one row, everything after with none.
-
-    Enough to terminate the window walk while recording exactly how many
-    requests were made.
-    """
-
-    def __init__(self):
-        self.calls = []
-
-    def get(self, url, params=None, timeout=None):
-        self.calls.append((url, list(params or [])))
-        return FakeResponse(ONE_TRADE if len(self.calls) == 1 else b"[]")
-
-
-@pytest.fixture
-def client(tmp_path):
-    """Installs a cache-backed client with a fake session as the module default.
-
-    collect_trades() reaches the network through the module-level _get, so
-    the substitution happens at the client rather than by monkeypatching
-    _get — which means these tests exercise the real cache path.
-    """
-    fake = CachedClient(
-        "https://data-api.polymarket.com",
-        cache=ResponseCache(tmp_path),
-        session=FakeSession(),
-    )
-    polymarket.set_default_client(fake)
-    yield fake
-    polymarket.set_default_client(None)
-
 
 # ===========================================================================
 # The acceptance criterion, exercised through the collector
 # ===========================================================================
 
-def test_collecting_the_same_window_twice_makes_no_second_request(client):
+def test_collecting_the_same_window_twice_makes_no_second_request(installed_api):
     query = TradeQuery(market="0xabc", start=0, end=100, taker_only=False)
 
     first, _ = polymarket.collect_trades(query)
-    calls_after_first = client.network_calls
+    calls_after_first = installed_api.network_calls
     second, _ = polymarket.collect_trades(query)
 
     assert first == second
     assert calls_after_first > 0                        # it really did collect
-    assert client.network_calls == calls_after_first    # and then it did not
+    assert installed_api.network_calls == calls_after_first    # and then it did not
 
 
-def test_the_response_is_stored_as_bytes_with_a_retrieval_timestamp(client):
+def test_the_response_is_stored_as_bytes_with_a_retrieval_timestamp(installed_api):
     query = TradeQuery(market="0xabc", start=0, end=100, taker_only=False)
     polymarket.collect_trades(query)
 
-    index = (client.cache.cache_dir / "index.jsonl").read_text().strip().splitlines()
+    index = (installed_api.cache.cache_dir / "index.jsonl").read_text().strip().splitlines()
     meta = json.loads(index[0])
 
     assert meta["endpoint"] == "/trades"
@@ -115,7 +53,7 @@ def test_the_response_is_stored_as_bytes_with_a_retrieval_timestamp(client):
     assert ["takerOnly", "false"] in meta["params"]     # the setting is recorded
 
 
-def test_an_unscoped_query_is_refused_before_anything_is_sent(client):
+def test_an_unscoped_query_is_refused_before_anything_is_sent(installed_api):
     """WS4 test 8: with no user and no market, start/end are ignored."""
     query = TradeQuery(start=0, end=100, taker_only=False)
 
@@ -123,13 +61,13 @@ def test_an_unscoped_query_is_refused_before_anything_is_sent(client):
         polymarket.collect_trades(query)
 
 
-def test_taker_only_reaches_the_api_as_a_lowercase_string(client):
+def test_taker_only_reaches_the_api_as_a_lowercase_string(installed_api):
     """Python would send "False"; the API wants "false"."""
     polymarket.collect_trades(
         TradeQuery(market="0xabc", start=0, end=100, taker_only=False)
     )
 
-    _, params_sent = client.session.calls[0]
+    _, params_sent = installed_api.session.calls[0]
     assert ("takerOnly", "false") in params_sent
 
 

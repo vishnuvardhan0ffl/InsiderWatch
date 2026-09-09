@@ -1,0 +1,71 @@
+{
+  "run_timestamp_utc": "2026-09-07T03:38:44.819408+00:00",
+  "story": "WS5 \u2014 Implement the raw storage and caching layer",
+  "market_tested": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+  "request_tested": {
+    "endpoint": "/trades",
+    "params": {
+      "market": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+      "takerOnly": "False",
+      "limit": "5"
+    }
+  },
+  "headline_question": "Does the caching layer meet its three acceptance criteria against the live API?",
+  "headline_answer": "YES",
+  "results": [
+    {
+      "check": "1",
+      "name": "Identical re-run performs zero network calls",
+      "result": "PASS",
+      "detail": "network calls: 1 then 1; second served from cache = True; 5 rows returned"
+    },
+    {
+      "check": "2a",
+      "name": "Bytes on disk are the bytes the API sent",
+      "result": "PASS",
+      "detail": "4373 bytes at 4147263b1a0e2a3be2e267908f670cfd92d66e9ce27027fb8b0bc80941715f47.json; identical to response body = True"
+    },
+    {
+      "check": "2b",
+      "name": "Recorded SHA-256 matches the stored file",
+      "result": "PASS",
+      "detail": "meta 49296f3b867c0f02... vs file 49296f3b867c0f02..."
+    },
+    {
+      "check": "2c",
+      "name": "Retrieval timestamp and parameters recorded",
+      "result": "PASS",
+      "detail": "retrieved_at=2026-09-07T03:38:44+00:00; params=[['limit', '5'], ['market', '0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21'], ['takerOnly', 'false']]"
+    },
+    {
+      "check": "3a",
+      "name": "Explicit cache path honoured",
+      "result": "PASS",
+      "detail": "resolved to /var/folders/gx/6z_qgnh51fxdzjz5pnbhg_h40000gn/T/insiderwatch_cache_check_mlnqht12/explicit"
+    },
+    {
+      "check": "3b",
+      "name": "INSIDERWATCH_CACHE_DIR honoured",
+      "result": "PASS",
+      "detail": "resolved to /var/folders/gx/6z_qgnh51fxdzjz5pnbhg_h40000gn/T/insiderwatch_cache_check_mlnqht12/from_env"
+    },
+    {
+      "check": "3c",
+      "name": "Two caches in two places stay separate",
+      "result": "PASS",
+      "detail": "a second cache directory does not see the first one's entries"
+    },
+    {
+      "check": "4",
+      "name": "Offline replay returns the data and never goes online",
+      "result": "PASS",
+      "detail": "replayed 5 rows identical to collection = True; uncollected request raised CacheMiss = True"
+    },
+    {
+      "check": "5",
+      "name": "Unscoped /trades call refused before anything is sent",
+      "result": "PASS",
+      "detail": "UnscopedRequestError raised = True; network calls made = 0 (WS4 test 8)"
+    }
+  ]
+}

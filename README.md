@@ -22,15 +22,19 @@ insiderwatch/
 │   ├── polymarket.py       # /trades, /activity, /closed-positions
 │   ├── cache.py            # raw response storage — see docs/caching_layer.md
 │   └── session.py          # pacing and retries, outside the cache
-├── analysis/
+├── processing/
+│   └── anonymise.py        # ethics protocol in code — run before publishing anything
+├── analysis/               # features, heuristics, scoring — Sprint 3-4
 │   └── pagination_validation.ipynb
 ├── cli/                    # CLI skeleton — Sprint 2 story
-├── processing/              # cleaning/normalisation — Sprint 3 story
-├── analysis/                # features, heuristics, scoring — Sprint 3-4
-├── visualisation/           # figures — Sprint 3-5
+├── visualisation/          # figures — Sprint 3-5
 ├── config/
 │   └── seeds.json          # seed-case condition IDs + boundary probe market
 ├── tests/
+│   ├── README.md           # how to write a test and record a fixture — START HERE
+│   ├── conftest.py         # the harness: fake sessions + the no-network guard
+│   ├── fixtures/           # recorded API responses + MANIFEST.json provenance
+│   └── record_fixtures.py  # re-record from the live API
 ├── docs/
 │   ├── data_dictionary.md  # field-level dictionary, seeded from WS4 §3
 │   └── WS4_test6_V1V2_continuity_finding.md   # R1 closed — read this before collector work
@@ -129,12 +133,21 @@ rather than quietly downloading fresh data. See `docs/caching_layer.md`.
 pytest -q
 ```
 
-The included tests are offline only — no network required. They cover the
-caching layer, the collector's wiring into it (including that a repeated
-collection makes no requests), window pagination and offset-cap splitting,
-explicit-`takerOnly` enforcement, and the verification suite's cutover
-constant, pre-migration window and response summarisation. Fixture-backed tests against recorded API responses
+The suite runs offline in about a second — no API key, no network. That is
+enforced, not assumed: `tests/conftest.py` blocks real sockets, so a test that
+tries to reach the API fails and names itself.
+
+Tests run against **recorded fixtures** in `tests/fixtures/` — real API
+responses, saved with their provenance in `MANIFEST.json` and anonymised per
+the ethics protocol. **`tests/README.md` explains how to write a test, use a
+fixture and record a new one.** Start there. Fixture-backed tests against recorded API responses
 are Sprint 2's "test harness and recorded fixtures" story.
+
+To re-record a fixture from the live API:
+
+```bash
+python tests/record_fixtures.py --list
+```
 
 To demonstrate the caching layer against the **live** API and write dated
 evidence for it:

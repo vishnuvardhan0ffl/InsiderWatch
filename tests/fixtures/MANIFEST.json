@@ -1,0 +1,56 @@
+{
+  "_README": "Provenance for every fixture. Read this before trusting one. 'observed' means these are real records an API returned on the recorded date, and may be cited. 'unverified' means the shape was written from documentation and has never been seen from the live API - it is safe to test against, but must NOT be cited as evidence of what the API returns.",
+  "_anonymisation": "Every observed fixture has been through processing.anonymise: name, pseudonym, bio and profileImage removed; proxyWallet replaced with a stable hash. Per the ethics protocol no identifying profile data is committed. tests/test_fixtures.py re-checks this on every run.",
+  "_refreshing": "python tests/record_fixtures.py --help. Needs a normal network connection. Re-record only when the API changes shape, and say so in the commit message - a test that silently starts passing against different data is worse than one that fails.",
+  "fixtures": {
+    "trades.json": {
+      "endpoint": "/trades",
+      "status": "observed",
+      "records": 5,
+      "recorded": "2026-08-20",
+      "source": "data/external/feasibility_check_2026-08-20.json -> results[test=1].body",
+      "notes": "Unscoped /trades call against the live global feed. Short-dated BTC up/down markets, which is what that feed is mostly made of."
+    },
+    "trades_maduro.json": {
+      "endpoint": "/trades",
+      "status": "observed",
+      "records": 25,
+      "recorded": "2026-09-06",
+      "source": "data/raw/polymarket/maduro_trades.json (first 25 of 11,588)",
+      "market": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+      "notes": "Seed-case market (Maduro), takerOnly=false. TRUNCATED to 25 rows, so it is not a full 500-row page - do not use it to test end-of-page detection."
+    },
+    "activity.json": {
+      "endpoint": "/activity",
+      "status": "observed",
+      "records": 20,
+      "recorded": "2026-08-20",
+      "source": "data/external/feasibility_check_2026-08-20.json -> results[test=2].body",
+      "notes": "Types present: REDEEM, TRADE. No DEPOSIT or WITHDRAWAL rows: this recording did not target a wallet with funding events, so it cannot exercise the wallet-funding features. Record one that does before WS7."
+    },
+    "closed_positions.json": {
+      "endpoint": "/closed-positions",
+      "status": "observed",
+      "records": 20,
+      "recorded": "2026-08-20",
+      "source": "data/external/feasibility_check_2026-08-20.json -> results[test=3].body",
+      "notes": "Carries realizedPnl and avgPrice - the two fields every profitability feature depends on."
+    },
+    "positions.json": {
+      "endpoint": "/positions",
+      "status": "unverified",
+      "records": 2,
+      "recorded": null,
+      "source": "docs/data_dictionary.md field list (documented, never observed)",
+      "notes": "The data dictionary marks no /positions field as (obs) - this endpoint has never been called. Fields here are the documented ones plus proxyWallet and asset by analogy with the other endpoints. The real response probably carries more. Replace this with a real recording on the next live run."
+    },
+    "error_429.json": {
+      "endpoint": "any",
+      "status": "unverified",
+      "records": 0,
+      "recorded": null,
+      "source": "hand-written",
+      "notes": "Polymarket's actual 429 body has not been captured. The body text is a guess; the status code is what the tests care about."
+    }
+  }
+}

@@ -1,10 +1,10 @@
 """
 Tests for the raw response cache.
 
-These run offline. Instead of a real requests.Session we pass in FakeSession,
-which records every call it is given. That is how we prove the cache works: we
-do not assume the second collection was fast, we assert that no request was
-made at all.
+These run offline. Instead of a real requests.Session we pass in ReplaySession
+from tests/conftest.py, which records every call it is given. That is how we
+prove the cache works: we do not assume the second collection was fast, we
+assert that no request was made at all.
 
 The tests are grouped under the three acceptance criteria from the Jira story,
 plus the safety guards. If you are reading this module to learn the codebase,
@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 
 import pytest
+
+from tests.conftest import ReplaySession
 
 from collectors.cache import (
     CACHE_DIR_ENV_VAR,
@@ -32,44 +34,15 @@ from collectors.cache import (
 FAKE_TRADES = b'[{"proxyWallet":"0x07d126ea","side":"BUY","size":1200,"price":0.34}]'
 
 
-class FakeResponse:
-    """The few bits of a requests.Response that our client actually uses."""
-
-    def __init__(self, body, status_code=200):
-        self.content = body
-        self.status_code = status_code
-        self.url = "https://fake-api/trades"
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise RuntimeError("HTTP {}".format(self.status_code))
-
-
-class FakeSession:
-    """Stands in for requests.Session and remembers every call it receives."""
-
-    def __init__(self, body=FAKE_TRADES, status_code=200):
-        self.body = body
-        self.status_code = status_code
-        self.calls = []
-
-    def get(self, url, params=None, timeout=None):
-        self.calls.append((url, list(params or [])))
-        return FakeResponse(self.body, self.status_code)
-
-
 @pytest.fixture
-def api(tmp_path):
+def api(make_api):
     """A client writing to a throwaway directory, talking to a fake API.
 
-    tmp_path is a pytest built-in: a fresh empty folder for each test, deleted
-    afterwards. It means tests never touch the real data/raw/ directory.
+    make_api and ReplaySession come from tests/conftest.py, so every test file
+    fakes the API the same way. The cache lands in a temp folder that pytest
+    deletes afterwards, so tests never touch the real data/raw/.
     """
-    return CachedClient(
-        base_url="https://data-api.polymarket.com",
-        cache=ResponseCache(tmp_path),
-        session=FakeSession(),
-    )
+    return make_api(ReplaySession(FAKE_TRADES))
 
 
 # ===========================================================================
@@ -119,7 +92,7 @@ def test_an_offline_client_replays_the_cache_and_never_goes_online(tmp_path):
     """This is the mode the M2 demo and all frozen-dataset analysis run in."""
     params = {"market": "0xd1e4e03a", "takerOnly": False}
 
-    collector = CachedClient("https://api", ResponseCache(tmp_path), FakeSession())
+    collector = CachedClient("https://api", ResponseCache(tmp_path), ReplaySession(FAKE_TRADES))
     collected = collector.get_json("/trades", params)
 
     # No session at all, so there is nothing that could reach the network.
@@ -171,7 +144,7 @@ def test_every_saved_response_adds_a_line_to_the_index(api):
 def test_failed_requests_are_not_saved(tmp_path):
     """A cached 429 would be replayed forever as if it were data."""
     api = CachedClient("https://api", ResponseCache(tmp_path),
-                       FakeSession(body=b"rate limited", status_code=429))
+                       ReplaySession((b"rate limited", 429)))
 
     with pytest.raises(RuntimeError):
         api.get_json("/trades", {"market": "0xd1e4e03a"})
@@ -207,8 +180,8 @@ def test_where_the_cache_lives_argument_beats_env_beats_default(tmp_path, monkey
 def test_two_caches_in_two_places_stay_separate(tmp_path):
     params = {"market": "0xd1e4e03a"}
 
-    first = CachedClient("https://api", ResponseCache(tmp_path / "a"), FakeSession())
-    second = CachedClient("https://api", ResponseCache(tmp_path / "b"), FakeSession())
+    first = CachedClient("https://api", ResponseCache(tmp_path / "a"), ReplaySession(FAKE_TRADES))
+    second = CachedClient("https://api", ResponseCache(tmp_path / "b"), ReplaySession(FAKE_TRADES))
 
     first.get_json("/trades", params)
 
