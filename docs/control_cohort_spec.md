@@ -206,15 +206,17 @@ from it.
 **Step 3 — collect each cohort wallet's history.**
 
 ```python
+from collectors.polymarket_activity import collect_wallet_profile
+
 for wallet in {row.wallet for row in cohort.wallets}:
-    activity = list(fetch_activity(wallet, start=1,
-                                   exclude_deposits_withdrawals=False))
-    closed   = list(fetch_closed_positions(wallet))
+    profile = collect_wallet_profile(wallet)   # activity + positions + P&L
 ```
 
-`start=1` requests full history rather than the ~3-year default;
-`exclude_deposits_withdrawals=False` keeps the funding events that wallet-age
-and funding-behaviour features need.
+`collect_wallet_profile` requests full history (`start=1`) rather than the
+~3-year default and keeps deposits and withdrawals, which is what the
+wallet-age and funding-behaviour features need. It also hands back
+`first_activity_timestamp`, `funding_events` and `realised_pnl` already
+derived.
 
 **Step 4 — anonymise before anything is written outside `data/raw/`.**
 
@@ -235,11 +237,11 @@ seed, the market list, the frame size, the stratum counts and a content hash.
 | | |
 |---|---|
 | Market collection, 9 markets | ~810 requests (the Maduro market took 90) |
-| `/activity` — 1,000 wallets × 3 pages | 3,000 |
+| `/activity` — 1,000 wallets × ~20 requests | 20,000 |
 | `/closed-positions` — × 2 pages | 2,000 |
 | `/positions` — × 1 page | 1,000 |
-| **Total** | **≈ 6,810 requests** |
-| At our pace (3.3 req/s) | **≈ 34 minutes** |
+| **Total** | **≈ 23,810 requests** |
+| At our pace (3.3 req/s) | **≈ 2 hours** |
 
 Against the documented ceilings (WS4 §3.3):
 
@@ -253,17 +255,31 @@ Against the documented ceilings (WS4 §3.3):
 Rate limits are not a constraint on this job. Regenerate the estimate for any
 change of size with `estimate_api_calls(cohort, market_collection_calls=810)`.
 
+**The `/activity` figure was corrected on 9 Sep and it is the number to
+watch.** The first live SCRUM-45 run cost **2,969 requests for a single
+wallet** — 2,945 of them returning nothing, and 2,934 spent walking empty
+7-day windows between 1970 and that wallet's first activity, because
+wallet-age collection asks for `start=1`. At that rate this cohort would have
+been roughly **three million requests and ten days**, not two hours. The
+collector now starts with one window and splits only when the 5,000-record
+cap is actually reached; on the synthetic 12,000-event wallet that is 144
+requests instead of 2,836.
+
+If a future change reintroduces a small fixed `window_s` alongside `start=1`,
+this budget is wrong by three orders of magnitude. `tests/test_windowing.py`
+guards against it.
+
 Caching means a rerun costs **zero** requests, so the 34 minutes is paid once.
 
 ---
 
 ## 6. Blockers — read before executing
 
-1. **`fetch_activity` silently truncates at 5,000 records.** It stops at the
-   offset cap and returns, with no windowing and no warning. Step 3 is the
-   route to wallet age; on any active wallet it will currently return a
-   partial history and a **wrong first-activity timestamp** that looks
-   entirely plausible. **Fix before building the cohort.**
+1. ~~**`fetch_activity` silently truncates at 5,000 records.**~~ **Resolved**
+   by SCRUM-45 (`collectors/polymarket_activity.py`). Activity is now
+   collected by time window with recursive splitting at the offset cap,
+   verified live at 7,374 records across 7 splits, and the old truncating
+   stub has been removed. Step 3 above is safe.
 
 2. **Offset paging may be dropping trades.** In the Maduro collection all
    11,588 trades share timestamps with other trades (only 3,374 distinct

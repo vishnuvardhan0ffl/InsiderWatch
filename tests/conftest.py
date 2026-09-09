@@ -187,7 +187,7 @@ def fixture_api(make_api):
 def installed_api(make_api, request):
     """A client installed as the collector module's default, then removed.
 
-    collect_trades() and fetch_activity() reach the API through the module
+    collect_trades() and collect_activity() reach the API through the module
     level _get, so there is no argument to pass a client into. Swapping the
     module's client means the test still goes through the real cache, unlike
     monkeypatching _get. Pick the session with @pytest.mark.session("fixtures");

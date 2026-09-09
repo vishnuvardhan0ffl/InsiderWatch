@@ -110,15 +110,17 @@ sounds. `collectors/polymarket.py` used to hash its parameters and write the
 of when it was retrieved. It could not be cited as evidence, which is the whole
 reason for keeping raw responses.
 
-It now calls `CachedClient`. Transport — pacing and backoff on 429/5xx — lives
+Both collectors now call `CachedClient` — `collectors/polymarket_activity.py`
+reaches it through `polymarket._get`, so it shares the same cache and throttle.
+Transport — pacing and backoff on 429/5xx — lives
 in `collectors/session.py`, sitting *outside* the cache, so the cache never
 sleeps and never retries. Any collector added later inherits both.
 
 ```
-fetch_trades()  ─┐
-                 ├─→ CachedClient ─→ ResponseCache ─→ data/raw/
-fetch_activity()─┘        │
-                          └─→ ThrottledRetryingSession ─→ the API
+collect_trades()   ─┐
+                    ├─→ CachedClient ─→ ResponseCache ─→ data/raw/
+collect_activity() ─┘        │
+                             └─→ ThrottledRetryingSession ─→ the API
 ```
 
 Every `fetch_*` function takes an optional `client=`, so a test or the CLI can

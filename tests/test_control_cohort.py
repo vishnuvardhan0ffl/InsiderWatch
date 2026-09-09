@@ -11,6 +11,7 @@ and no single market dominates.
 import pytest
 
 from processing.control_cohort import (
+    CALLS_PER_WALLET,
     MARKET_MAKER,
     ORDINARY,
     build_frame,
@@ -255,7 +256,7 @@ def test_the_budget_includes_the_market_collection_and_reports_time():
 
     estimate = estimate_api_calls(cohort, market_collection_calls=810)
 
-    # 100 wallets x 6 calls each, plus the market pull.
-    assert estimate["total_calls"] == 600 + 810
+    per_wallet = sum(CALLS_PER_WALLET.values())
+    assert estimate["total_calls"] == 100 * per_wallet + 810
     assert estimate["estimated_minutes"] > 0
     assert all("under the limit" in v for v in estimate["headroom"].values())

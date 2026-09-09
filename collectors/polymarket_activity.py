@@ -60,10 +60,15 @@ FUNDING_TYPES = frozenset({
 })
 
 
-# Activity types confirmed observable in the 2026-08-20
-# feasibility run. Anything outside this set is surfaced in
-# metadata so unexpected types are noticed rather than
-# silently absorbed.
+# Every activity type documented in WS4 3.2 and
+# docs/data_dictionary.md. Anything outside this set is
+# surfaced in metadata so a genuinely new type is noticed
+# rather than silently absorbed.
+#
+# The last four were missing from an earlier version of this
+# set, which made a normal wallet report three "unexpected"
+# types on its first live run. A whitelist that cries wolf
+# gets ignored, so it has to match the documentation exactly.
 KNOWN_ACTIVITY_TYPES = frozenset({
     "TRADE",
     "SPLIT",
@@ -73,6 +78,10 @@ KNOWN_ACTIVITY_TYPES = frozenset({
     "CONVERSION",
     "DEPOSIT",
     "WITHDRAWAL",
+    "YIELD",
+    "MAKER_REBATE",
+    "TAKER_REBATE",
+    "REFERRAL_REWARD",
 })
 
 
@@ -343,10 +352,24 @@ def _fetch_activity_window(
 
 def collect_activity(
     query: ActivityQuery,
-    window_s: int = DEFAULT_WINDOW_S
+    window_s: Optional[int] = None
 ):
     """
     Collect complete activity history for a wallet.
+
+    window_s
+        Size of the first time window. Leave it as None, which means "one
+        window covering the whole range" and lets the offset-cap split find
+        the right size by itself.
+
+        Do NOT set this to a small fixed value when start=1. The wallet-age
+        query asks for all of history, and history starts at the Unix epoch,
+        so 7-day windows means walking 1970 to today one week at a time. On
+        the first live run that cost 2,969 requests for a single wallet, of
+        which 2,945 returned nothing and 2,934 were spent on empty weeks
+        before the wallet existed. Starting wide and splitting only when the
+        5,000-record cap is actually hit collects the same 7,374 records in
+        a few dozen requests.
 
     Returns
     -------
@@ -356,6 +379,12 @@ def collect_activity(
     metadata : dict
         Collection settings and pagination evidence.
     """
+
+    if window_s is None:
+        # One window. _fetch_activity_window halves it whenever the offset
+        # cap is reached, so the split is driven by how much data is there
+        # rather than by a guess made up front.
+        window_s = max(1, query.end - query.start + 1)
 
     _validate_activity_query(
         query

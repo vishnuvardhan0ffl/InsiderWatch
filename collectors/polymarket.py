@@ -730,78 +730,26 @@ def save_trade_collection(
 
 
 # ============================================================
-# Activity collector
+# Activity, positions and closed positions
 # ============================================================
-
-def fetch_activity(
-    user: str,
-    start: int = 1,
-    exclude_deposits_withdrawals: bool = False
-) -> Iterator[dict]:
-
-    offset = 0
-
-    while True:
-
-        params = {
-            "user": user,
-            "limit": PAGE_LIMIT,
-            "offset": offset,
-            "start": start,
-            "excludeDepositsWithdrawals":
-                str(
-                    exclude_deposits_withdrawals
-                ).lower()
-        }
-
-        page = _get(
-            "/activity",
-            params
-        )
-
-        if not page:
-            break
-
-        yield from page
-
-        offset += len(page)
-
-        if (
-            len(page) < PAGE_LIMIT
-            or offset >= ACTIVITY_OFFSET_CAP
-        ):
-            break
-
-
-# ============================================================
-# Closed positions collector
-# ============================================================
-
-def fetch_closed_positions(
-    user: str
-) -> Iterator[dict]:
-
-    offset = 0
-
-    while True:
-
-        params = {
-            "user": user,
-            "limit": PAGE_LIMIT,
-            "offset": offset
-        }
-
-        page = _get(
-            "/closed-positions",
-            params
-        )
-
-        if not page:
-            break
-
-        yield from page
-
-        offset += len(page)
-
-        if len(page) < PAGE_LIMIT:
-            break
+#
+# These live in collectors/polymarket_activity.py.
+#
+# There used to be a fetch_activity() and a fetch_closed_positions() here.
+# Both paged by offset alone and stopped dead at the API's 5,000 cap, with
+# no time windowing and no warning - so on any active wallet they returned
+# a partial history and a first-activity timestamp that was wrong and
+# looked entirely plausible. Wallet age is a headline feature, so that was
+# not a small bug.
+#
+# The replacements walk time windows the same way collect_trades does, and
+# come with derive_first_activity_timestamp, derive_funding_events and
+# derive_realised_pnl on top:
+#
+#     from collectors.polymarket_activity import (
+#         ActivityQuery, collect_activity, collect_wallet_profile,
+#         fetch_positions, fetch_closed_positions,
+#     )
+#
+# They import _get from this module, so they share this file's cache and
+# throttle. Do not reintroduce an offset-only version here.

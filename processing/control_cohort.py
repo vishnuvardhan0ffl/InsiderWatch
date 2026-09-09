@@ -254,7 +254,12 @@ def _draw_proportionally(rows, target, rng):
 # records, and most wallets fit in one or two pages; the averages below are
 # rounded up so the estimate is a ceiling rather than a hope.
 CALLS_PER_WALLET = {
-    "/activity": 3,           # full history, start=1 - the wallet-age route
+    # Full history from start=1, collected as one window that splits when the
+    # 5,000-record cap is hit. Measured at ~20 requests for an active wallet.
+    # This was 3 until 9 Sep, when the first live run showed a wallet costing
+    # 2,969 requests: 7-day windows against start=1 walk 1970 to today one
+    # week at a time. See docs/control_cohort_spec.md 5.
+    "/activity": 20,
     "/closed-positions": 2,   # realised P&L
     "/positions": 1,          # open positions
 }

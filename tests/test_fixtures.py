@@ -16,7 +16,7 @@ import json
 
 import pytest
 
-from collectors import polymarket
+from collectors import polymarket, polymarket_activity
 from collectors.cache import CacheMiss
 from processing.anonymise import PROFILE_FIELDS, find_identifying_fields
 
@@ -50,9 +50,26 @@ def test_the_trade_collector_reads_a_recorded_response(installed_api):
 
 @pytest.mark.session("fixtures")
 def test_the_activity_collector_reads_a_recorded_response(installed_api):
-    activity = list(polymarket.fetch_activity("0xabc"))
+    recorded = load_fixture("activity.json")
+    timestamps = [row["timestamp"] for row in recorded]
 
-    assert activity == load_fixture("activity.json")
+    # The window has to bracket the recorded timestamps. The collector
+    # refuses records that fall outside the window it asked for - that is
+    # the WS4 test 8 guard, and a fixture served for the wrong window looks
+    # exactly like the trap it is there to catch.
+    query = polymarket_activity.ActivityQuery(
+        user="0xabc",
+        start=min(timestamps),
+        end=max(timestamps),
+        exclude_deposits_withdrawals=False,
+    )
+    activity, _ = polymarket_activity.collect_activity(query, window_s=86400)
+
+    # Same records, but the collector returns them oldest-first. The API
+    # serves /activity newest-first; downstream features assume ascending.
+    assert sorted(activity, key=lambda r: r["timestamp"]) == \
+           sorted(recorded, key=lambda r: r["timestamp"])
+    assert activity == sorted(activity, key=lambda r: r["timestamp"])
     assert {row["type"] for row in activity} <= {"TRADE", "REDEEM", "SPLIT",
                                                  "MERGE", "REWARD", "CONVERSION",
                                                  "DEPOSIT", "WITHDRAWAL"}
@@ -60,7 +77,7 @@ def test_the_activity_collector_reads_a_recorded_response(installed_api):
 
 @pytest.mark.session("fixtures")
 def test_closed_positions_carry_the_profitability_fields(installed_api):
-    positions = list(polymarket.fetch_closed_positions("0xabc"))
+    positions = list(polymarket_activity.fetch_closed_positions("0xabc"))
 
     assert positions
     for row in positions:
@@ -68,12 +85,12 @@ def test_closed_positions_carry_the_profitability_fields(installed_api):
         assert "avgPrice" in row         # feeds "unusual confidence"
 
 
-def test_positions_is_reachable_but_has_no_collector_yet(fixture_api):
-    """/positions has a fixture and no collector. That is a gap, not an oversight.
+def test_the_positions_fixture_still_carries_the_documented_fields(fixture_api):
+    """/positions now has a collector (SCRUM-45) but still no real recording.
 
-    The fixture is marked unverified in MANIFEST.json because nobody has called
-    the endpoint yet. When someone writes fetch_positions(), record a real
-    response first and this test should grow teeth.
+    The fixture stays marked unverified in MANIFEST.json: its shape came from
+    docs/data_dictionary.md, and nobody has captured a live /positions
+    response. Record one and this test should grow teeth.
     """
 
     rows = fixture_api.get_json("/positions", {"user": "0xabc"})
@@ -81,8 +98,6 @@ def test_positions_is_reachable_but_has_no_collector_yet(fixture_api):
     documented = {"size", "avgPrice", "currentValue", "cashPnl",
                   "percentPnl", "curPrice", "redeemable", "conditionId"}
     assert documented <= set(rows[0])
-
-    assert not hasattr(polymarket, "fetch_positions")
 
 
 # ===========================================================================

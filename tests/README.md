@@ -94,7 +94,7 @@ def test_activity_comes_back(fixture_api):
     assert rows[0]["type"] == "TRADE"
 ```
 
-**Through the collector.** `collect_trades()` and `fetch_activity()` reach the
+**Through the collector.** `collect_trades()` and `collect_activity()` reach the
 API through the module-level `_get`, so there is no argument to pass a client
 into. `installed_api` swaps the collector's default client instead, and puts
 it back afterwards:
@@ -142,6 +142,11 @@ message what changed and why.
 | `test_polymarket_collector.py` | The collector's wiring into the cache |
 | `test_trade_pagination.py` | Window walking and offset-cap splitting |
 | `test_fixtures.py` | Collectors against recorded responses; fixture provenance and anonymisation |
+| `test_windowing.py` | Activity collection by time window, and the offset-cap split |
+| `test_pnl_and_trap.py` | Realised P&L, and the WS4 test 8 scope-trap guard |
+| `test_session.py` | Pacing and retries |
+| `test_anonymise.py` | The ethics protocol as code |
+| `test_control_cohort.py` | Control cohort sampling |
 | `test_verify_apis.py` | The WS4 verification suite's own logic |
 
 ## If a test fails

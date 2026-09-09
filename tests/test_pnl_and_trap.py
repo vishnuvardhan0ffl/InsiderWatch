@@ -1,139 +1,93 @@
 """
-tests/test_pnl_and_trap.py
+Realised P&L, and the guard against the scope trap (SCRUM-45).
 
-SCRUM-45 acceptance criterion:
+Acceptance criterion:
     "realised PnL per closed position"
 
-Runs the PnL derivation against the REAL /closed-positions
-payload captured in the 2026-08-20 feasibility check, and
-verifies the two guards that protect against the start/end
-scope trap confirmed by feasibility test 8.
+The P&L half runs against the REAL /closed-positions payload captured in the
+2026-08-20 feasibility check, so it checks our derivation against bytes the
+API actually returned rather than against something we invented.
 
-Run from the repository root:
-    python tests/test_pnl_and_trap.py
+The trap half is the more important one. WS4 test 8 proved that an unscoped
+call returns *current* data with a 200 and no error, silently ignoring start
+and end. If that ever happens on an activity call, the collector has to fail
+loudly - a wallet age quietly computed from today's data would be wrong in a
+way nothing downstream could detect.
 """
 
 import json
 import pathlib
-import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-
-sys.path.insert(
-    0,
-    str(ROOT)
-)
+import pytest
 
 import collectors.polymarket_activity as act
 
-
 FEASIBILITY = (
-    ROOT
-    / "data"
-    / "external"
-    / "feasibility_check_2026-08-20.json"
+    pathlib.Path(__file__).resolve().parents[1]
+    / "data" / "external" / "feasibility_check_2026-08-20.json"
 )
 
 
-# ============================================================
-# Realised PnL against real captured data
-# ============================================================
+@pytest.fixture
+def real_closed_positions():
+    """results[2] is test 3, polymarket_closed_positions_fields."""
 
-d = json.loads(
-    FEASIBILITY.read_text(encoding="utf-8")
-)
-
-# results[2] is test 3, polymarket_closed_positions_fields
-closed = d["results"][2]["body"]
-
-pnl = act.derive_realised_pnl(closed)
-
-print("positions      :", pnl["position_count"])
-print("missing pnl    :", pnl["positions_missing_pnl"])
-print("total realised :", round(pnl["total_realised_pnl"], 4))
-print("winners/losers :",
-      pnl["winning_positions"], "/", pnl["losing_positions"])
-
-assert pnl["position_count"] > 0, \
-    "no closed positions found in feasibility payload"
-
-assert pnl["positions_missing_pnl"] == 0, \
-    "realizedPnl missing on real data"
-
-print()
+    evidence = json.loads(FEASIBILITY.read_text(encoding="utf-8"))
+    return evidence["results"][2]["body"]
 
 
-# ============================================================
-# Scope-trap guard
-#
-# Feasibility test 8 proved the API silently ignores
-# start/end on unscoped calls and returns current data with
-# a 200. If that ever happens on an activity call, the
-# collector must fail loudly rather than record a wrong
-# wallet age.
-# ============================================================
+# ===========================================================================
+# Realised P&L, against real captured data
+# ===========================================================================
 
-def trap_get(
-    endpoint,
-    params,
-    use_cache=True,
-    retries=5
-):
-    # Deliberately return a current-time record regardless of
-    # the requested window.
-    return [{
-        "proxyWallet": "0xtest",
-        "timestamp": 1787241468,
-        "type": "TRADE"
-    }]
+def test_pnl_is_derived_for_every_real_closed_position(real_closed_positions):
+    pnl = act.derive_realised_pnl(real_closed_positions)
+
+    assert pnl["position_count"] > 0
+    assert pnl["positions_missing_pnl"] == 0
 
 
-act._get = trap_get
+def test_winners_and_losers_add_up(real_closed_positions):
+    pnl = act.derive_realised_pnl(real_closed_positions)
 
-query = act.ActivityQuery(
-    user="0xtest",
-    start=1,
-    end=1730100000
-)
-
-try:
-
-    act.collect_activity(
-        query,
-        window_s=86400
-    )
-
-    raise AssertionError(
-        "FAIL: out-of-window records were accepted"
-    )
-
-except RuntimeError as exc:
-
-    print("scope-trap guard fired:", str(exc)[:110])
+    assert pnl["winning_positions"] + pnl["losing_positions"] <= pnl["position_count"]
+    assert isinstance(pnl["total_realised_pnl"], float)
 
 
-# ============================================================
-# Unscoped queries rejected outright
-# ============================================================
+def test_an_empty_wallet_is_not_an_error():
+    """An empty array means no closed positions, not missing history
+    (docs/data_dictionary.md). Common for wallets whose bets resolved worthless."""
 
-try:
+    pnl = act.derive_realised_pnl([])
 
-    act._validate_activity_query(
-        act.ActivityQuery(
-            user="",
-            start=1,
-            end=2
-        )
-    )
-
-    raise AssertionError(
-        "FAIL: unscoped query was accepted"
-    )
-
-except ValueError as exc:
-
-    print("unscoped rejected     :", str(exc)[:90])
+    assert pnl["position_count"] == 0
+    assert pnl["positions_missing_pnl"] == 0
 
 
-print()
-print("ALL PNL + TRAP ASSERTIONS PASSED")
+# ===========================================================================
+# The scope trap (WS4 test 8)
+# ===========================================================================
+
+def test_records_outside_the_requested_window_are_refused(monkeypatch):
+    """The collector must not quietly accept today's data for an old window."""
+
+    def returns_current_data_regardless(endpoint, params, use_cache=True, retries=5):
+        return [{
+            "proxyWallet": "0xtest",
+            "timestamp": 1787241468,        # now, not the window asked for
+            "type": "TRADE",
+        }]
+
+    monkeypatch.setattr(act, "_get", returns_current_data_regardless)
+
+    query = act.ActivityQuery(user="0xtest", start=1, end=1730100000)
+
+    with pytest.raises(RuntimeError):
+        act.collect_activity(query, window_s=86400)
+
+
+def test_a_query_with_no_wallet_is_rejected_before_any_request():
+    """Unscoped means start and end are ignored, so there is nothing to salvage."""
+
+    with pytest.raises(ValueError):
+        act._validate_activity_query(act.ActivityQuery(user="", start=1, end=2))
