@@ -67,7 +67,10 @@ def main():
     print("this will take a while on a busy wallet")
     print()
 
-    profile = collect_wallet_profile(wallet)
+    profile = collect_wallet_profile(
+        wallet,
+        window_s=20 * 365 * 86400
+    )
 
     meta = profile["activity_metadata"]
 
