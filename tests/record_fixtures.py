@@ -51,10 +51,13 @@ except Exception:
     pass
 
 BASE_URL = "https://data-api.polymarket.com"
+GAMMA_BASE_URL = "https://gamma-api.polymarket.com"
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 
 # Each recipe says which endpoint to call, what to save it as, and the
-# parameters that make the response worth keeping.
+# parameters that make the response worth keeping. "base" defaults to the Data
+# API; the Gamma recipes override it, because market and event metadata lives on
+# a different host.
 RECIPES = {
     "/trades": {
         "file": "trades.json",
@@ -80,6 +83,24 @@ RECIPES = {
         "file": "closed_positions.json",
         "params": lambda a: {"user": a.user, "limit": 20},
         "needs": "user",
+    },
+    # Gamma. These need nothing from the command line: the point of the
+    # recording is the response *shape*, and any five markets show it.
+    # Ordering is pinned so the recording is reproducible rather than
+    # whatever the catalogue happened to look like that minute.
+    "/markets": {
+        "file": "gamma_markets.json",
+        "base": GAMMA_BASE_URL,
+        "params": lambda a: {"limit": 5, "order": "id", "ascending": True,
+                             "closed": True},
+        "needs": None,
+    },
+    "/events": {
+        "file": "gamma_events.json",
+        "base": GAMMA_BASE_URL,
+        "params": lambda a: {"limit": 3, "order": "id", "ascending": True,
+                             "closed": True},
+        "needs": None,
     },
 }
 
@@ -108,15 +129,16 @@ def show_fixtures():
 def record(endpoint, args, session):
     recipe = RECIPES[endpoint]
     params = recipe["params"](args)
+    base = recipe.get("base", BASE_URL)
 
-    print("\nGET {}{}".format(BASE_URL, endpoint))
+    print("\nGET {}{}".format(base, endpoint))
     print("    params: {}".format(params))
 
     sendable = {
         k: ("true" if v is True else "false" if v is False else v)
         for k, v in params.items() if v is not None
     }
-    response = session.get(BASE_URL + endpoint, params=sendable, timeout=30)
+    response = session.get(base + endpoint, params=sendable, timeout=30)
     response.raise_for_status()
     records = response.json()
 
@@ -150,6 +172,7 @@ def record(endpoint, args, session):
     entry = manifest["fixtures"].setdefault(recipe["file"], {})
     entry.update({
         "endpoint": endpoint,
+        "base_url": base,
         "status": "observed",
         "records": len(safe),
         "recorded": datetime.now(timezone.utc).date().isoformat(),

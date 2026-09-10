@@ -18,9 +18,11 @@ WS4 evidence for that finding stays in `verify_apis.py` (tests 4 and 5) and
 ```
 insiderwatch/
 ├── verify_apis.py          # WS4 verification suite — run this FIRST
+├── verify_gamma.py         # live check for the Gamma collector — NOT YET RUN
 ├── collectors/
 │   ├── polymarket.py       # /trades, window pagination
 │   ├── polymarket_activity.py  # /activity, /positions, /closed-positions
+│   ├── gamma.py            # /markets, /events — market metadata, keyset walk
 │   ├── cache.py            # raw response storage — see docs/caching_layer.md
 │   └── session.py          # pacing and retries, outside the cache
 ├── processing/

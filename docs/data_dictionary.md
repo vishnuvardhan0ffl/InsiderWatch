@@ -138,22 +138,122 @@ record an empty response as missing history.
 | redeemable | | | | |
 | conditionId | | | | |
 
-## Polymarket Gamma API — `/markets`
+## Polymarket Gamma API — `/markets` (raw response)
 
-Used to resolve seed cases to condition IDs and to find markets live across a
-given date. Confirmed to serve pre-migration market metadata *(obs)*.
+Used to resolve seed cases to condition IDs, to find markets live across a given
+date, and to supply the market context every WS7 feature needs. Confirmed to
+serve pre-migration market metadata *(obs)*.
+
+Collected by `collectors/gamma.py`. Rows marked *(obs)* were seen in a live
+response on 20 August 2026. **Everything else here is documentation-only** —
+taken from the published Gamma reference and never seen from the live API. Run
+`python verify_gamma.py` from a normal connection to settle them, commit the
+evidence file it writes to `data/external/`, and only then add *(obs)*.
 
 | Field | Type | Units | Nullable | Notes |
 |---|---|---|---|---|
-| question | string *(obs)* | | No | |
-| slug | string *(obs)* | | No | |
-| conditionId | string *(obs)* | 0x hash | No | Join key to the Data API |
+| question | string *(obs)* | | No | The market question — the title field |
+| slug | string *(obs)* | | No | Human-readable identifier; the by-name lookup key |
+| conditionId | string *(obs)* | 0x hash | No | **The join key to the Data API.** A Gamma market and a `/trades` record meet here and nowhere else |
 | startDate | string *(obs)* | ISO 8601 | Yes | |
-| endDate | string *(obs)* | ISO 8601 | No | |
-| volumeNum | float *(obs)* | USD | No | |
+| endDate | string *(obs)* | ISO 8601 | No | Resolution date — feeds every time-before-event feature |
+| volumeNum | float *(obs)* | USD | No | Arrives as a JSON number or a numeric string; the collector coerces both |
+| id | string | | No | Gamma's own market id. The key the keyset walk orders and de-duplicates on |
+| liquidityNum | float | USD | Yes | `liquidity` observed as an alternative key name on some records; the collector reads either |
+| createdAt | string | ISO 8601 | Yes | Market creation date |
+| closed | bool | | Yes | May arrive as a bool or as the string "true"/"false" |
+| active | bool | | Yes | |
+| archived | bool | | Yes | |
+| outcomes | list | | Yes | May arrive JSON-encoded as a string, `"[\"Yes\", \"No\"]"`, rather than as a list |
+| clobTokenIds | list | | Yes | Same encoding quirk as `outcomes` |
+| eventSlug | string | | Yes | Not present on every record; the collector falls back to `events[0].slug` |
+| events | list of objects | | Yes | Parent event(s). Each may carry its own `tags` |
+| tags | list | | Yes | Objects `{id, label, slug}` or bare strings. Attached to the market, its parent event, or both |
 
-Useful parameters *(obs)*: `closed`, `end_date_min`, `end_date_max`, `order`,
-`ascending`, `limit`.
+**Request parameters.** Confirmed *(obs, 20 Aug 2026)*: `closed`, `end_date_min`,
+`end_date_max`, `order`, `ascending`, `limit`. Documentation-only, and named as
+module constants in `collectors/gamma.py` so a disagreement is a one-line fix:
+`slug`, `condition_ids`, `offset`, `tag_id`, `start_date_min`, `start_date_max`,
+`liquidity_num_min`, `volume_num_min`.
+
+**Pagination.** Gamma exposes `limit`/`offset`, not a cursor. The collector pins
+the ordering (`order=id`, `ascending=true`), advances `offset` by rows actually
+received, and drops any key it has already returned — so a market created
+mid-walk cannot cause a duplicate record. It cannot defend against a market
+*removed* from the result set below the cursor, which would skip one record;
+that limitation is written into every collection's metadata. Collect a
+catalogue in one sitting rather than resuming a walk hours later.
+
+## Gamma collector output — market record
+
+What `collectors.gamma.normalise_market()` emits, and what
+`fetch_market_by_slug`, `fetch_market_by_condition_id`, `fetch_markets` and
+`collect_markets` all return. This table **is** the schema:
+`tests/test_gamma_collector.py` asserts that these field names and the
+collector's output match exactly, so the two cannot drift apart.
+
+Types below are what the collector guarantees after coercion, not what the API
+sent. `_ts` fields are derived, not returned by Gamma: they are the same instant
+in Unix seconds, carried because the Data API works in Unix seconds and
+converting at the call site is how off-by-a-timezone bugs get in.
+
+| Field | Type | Units | Nullable | Derived from |
+|---|---|---|---|---|
+| condition_id | string | 0x hash | Yes | `conditionId` |
+| market_id | string | | Yes | `id` |
+| question | string | | Yes | `question` |
+| slug | string | | Yes | `slug` |
+| event_slug | string | | Yes | `eventSlug`, else the first `events[].slug` |
+| tags | list of string | tag slugs | No — `[]` when absent | `tags[]` and `events[].tags[]`, de-duplicated, API order preserved. Slug preferred, then label, then id |
+| liquidity_num | float | USD | Yes | `liquidityNum`, else `liquidity` |
+| volume_num | float | USD | Yes | `volumeNum`, else `volume` |
+| start_date | string | ISO 8601 UTC | Yes | `startDate`, normalised to UTC. An unparsable value is passed through unchanged rather than dropped |
+| end_date | string | ISO 8601 UTC | Yes | `endDate` |
+| created_at | string | ISO 8601 UTC | Yes | `createdAt` |
+| start_date_ts | int | Unix seconds | Yes | Derived from `startDate` |
+| end_date_ts | int | Unix seconds | Yes | Derived from `endDate` |
+| created_at_ts | int | Unix seconds | Yes | Derived from `createdAt` |
+| closed | bool | | Yes | `closed` |
+| active | bool | | Yes | `active` |
+| archived | bool | | Yes | `archived` |
+| outcomes | list of string | | No — `[]` when absent | `outcomes`, JSON-decoded if it arrived as a string |
+| clob_token_ids | list of string | | No — `[]` when absent | `clobTokenIds`, same decoding |
+
+Every field is nullable because Gamma omits fields per record rather than
+returning nulls, and a collector that raised on a missing `liquidityNum` would
+be unusable against the real catalogue. Nulls are a fact about the market to be
+reported in the dataset validation report — not something to fill in.
+
+## Gamma collector output — event record
+
+What `collectors.gamma.normalise_event()` emits. Events are how Gamma groups
+related markets, and `market_condition_ids` is the join back to both the market
+records above and the Data API.
+
+| Field | Type | Units | Nullable | Derived from |
+|---|---|---|---|---|
+| event_id | string | | Yes | `id` |
+| title | string | | Yes | `title` |
+| slug | string | | Yes | `slug` |
+| tags | list of string | tag slugs | No — `[]` when absent | As the market record |
+| liquidity_num | float | USD | Yes | `liquidityNum`, else `liquidity` |
+| volume_num | float | USD | Yes | `volumeNum`, else `volume` |
+| start_date | string | ISO 8601 UTC | Yes | `startDate` |
+| end_date | string | ISO 8601 UTC | Yes | `endDate` |
+| created_at | string | ISO 8601 UTC | Yes | `createdAt` |
+| start_date_ts | int | Unix seconds | Yes | Derived from `startDate` |
+| end_date_ts | int | Unix seconds | Yes | Derived from `endDate` |
+| created_at_ts | int | Unix seconds | Yes | Derived from `createdAt` |
+| closed | bool | | Yes | `closed` |
+| active | bool | | Yes | `active` |
+| archived | bool | | Yes | `archived` |
+| market_condition_ids | list of string | 0x hashes | No — `[]` when absent | `markets[].conditionId`, de-duplicated, order preserved |
+| market_count | int | | No | Length of `market_condition_ids` |
+
+**A caution on `market_count`.** It counts the markets Gamma returned inside
+this event record, which is not necessarily every market the event has ever
+had — a filtered or paginated event response may carry a subset. Do not use it
+as a denominator without checking that against a live response first.
 
 ## Kalshi Trade API v2 — `/markets/trades`
 

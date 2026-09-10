@@ -1,0 +1,135 @@
+[
+  {
+    "id": "5015",
+    "question": "Will Donald Trump win the 2024 US Presidential Election?",
+    "conditionId": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+    "slug": "will-donald-trump-win-the-2024-us-presidential-election",
+    "startDate": "2024-01-04T17:00:00Z",
+    "endDate": "2024-11-05T12:00:00Z",
+    "createdAt": "2024-01-04T16:41:02.117Z",
+    "liquidityNum": "3104882.41",
+    "volumeNum": "3612884420.66",
+    "closed": true,
+    "active": true,
+    "archived": false,
+    "outcomes": "[\"Yes\", \"No\"]",
+    "clobTokenIds": "[\"21742633143463906290569050155826241533067272736897614950488156847949938836455\", \"48331043336612883890938759509493159234755048973500640148014422747788308965732\"]",
+    "events": [
+      {
+        "id": "903",
+        "slug": "presidential-election-winner-2024",
+        "title": "Presidential Election Winner 2024",
+        "tags": [
+          {"id": "2", "label": "Politics", "slug": "politics"},
+          {"id": "101", "label": "Elections", "slug": "elections"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "18422",
+    "question": "Will María Corina Machado win the Nobel Peace Prize in 2025?",
+    "conditionId": "0x14a3dfeba8b22a32feb0f10763db68bc4d2abeb5bff90e9ae20de53793b35a1d",
+    "slug": "will-mara-corina-machado-win-the-nobel-peace-prize-in-2025",
+    "startDate": "2025-08-14T09:30:00Z",
+    "endDate": "2025-10-10T00:00:00Z",
+    "createdAt": "2025-08-14T09:12:44.008Z",
+    "liquidityNum": 88214.9,
+    "volumeNum": 1420331.5,
+    "closed": true,
+    "active": true,
+    "archived": false,
+    "outcomes": ["Yes", "No"],
+    "clobTokenIds": ["1122334455", "5544332211"],
+    "tags": [
+      {"id": "7", "label": "Nobel Prize", "slug": "nobel-prize"},
+      {"id": "2", "label": "Politics", "slug": "politics"}
+    ],
+    "events": [
+      {
+        "id": "4188",
+        "slug": "nobel-peace-prize-2025",
+        "title": "Nobel Peace Prize 2025",
+        "tags": [
+          {"id": "2", "label": "Politics", "slug": "politics"},
+          {"id": "310", "label": "Awards", "slug": "awards"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "253591",
+    "question": "Nicolás Maduro released from custody by January 31, 2026?",
+    "conditionId": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+    "slug": "nicolas-maduro-released-from-custody-by-january-31-2026",
+    "eventSlug": "maduro-custody-2026",
+    "startDate": "2026-01-04T12:00:00Z",
+    "endDate": "2026-01-31T00:00:00Z",
+    "createdAt": "2026-01-04T11:52:19.640Z",
+    "liquidityNum": "412903.08",
+    "volumeNum": "9884120.77",
+    "closed": true,
+    "active": true,
+    "archived": false,
+    "outcomes": "[\"Yes\", \"No\"]",
+    "clobTokenIds": "[\"9911223344\", \"4433221199\"]",
+    "tags": [
+      {"id": "2", "label": "Politics", "slug": "politics"},
+      {"id": "455", "label": "Venezuela", "slug": "venezuela"}
+    ]
+  },
+  {
+    "id": "253744",
+    "question": "US x Iran ceasefire by April 7?",
+    "conditionId": "0x4c5701bcde0b8fb7d7f48c8e9d20245a6caa58c61a77f981fad98f2bfa0b1bc7",
+    "slug": "us-x-iran-ceasefire-by-april-7",
+    "startDate": "2026-03-18T22:05:00Z",
+    "endDate": "2026-04-07T00:00:00Z",
+    "createdAt": null,
+    "liquidity": "77450.20",
+    "volume": "2210884.03",
+    "closed": true,
+    "active": true,
+    "archived": false,
+    "outcomes": "[\"Yes\", \"No\"]",
+    "clobTokenIds": "[\"7788990011\", \"1100998877\"]",
+    "events": [
+      {
+        "id": "5210",
+        "slug": "us-iran-conflict",
+        "title": "US x Iran",
+        "tags": [
+          {"id": "3", "label": "Geopolitics", "slug": "geopolitics"},
+          {"id": "2", "label": "Politics", "slug": "politics"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "254010",
+    "question": "Strait of Hormuz traffic returns to normal by May 15?",
+    "conditionId": "0xffe381a80c1e36f9e0b03a542aa8fe56e74a67d2566a4e29396d4427aa4244c9",
+    "slug": "strait-of-hormuz-traffic-returns-to-normal-by-may-15",
+    "startDate": "2026-04-22T18:13:00Z",
+    "endDate": "2026-05-15T00:00:00Z",
+    "createdAt": "2026-04-22T18:02:55.301Z",
+    "liquidityNum": "153220.64",
+    "volumeNum": "884203.19",
+    "closed": false,
+    "active": true,
+    "archived": false,
+    "outcomes": "[\"Yes\", \"No\"]",
+    "clobTokenIds": "[\"6655443322\", \"2233445566\"]",
+    "events": [
+      {
+        "id": "5388",
+        "slug": "strait-of-hormuz",
+        "title": "Strait of Hormuz",
+        "tags": [
+          {"id": "3", "label": "Geopolitics", "slug": "geopolitics"},
+          {"id": "612", "label": "Shipping", "slug": "shipping"}
+        ]
+      }
+    ]
+  }
+]

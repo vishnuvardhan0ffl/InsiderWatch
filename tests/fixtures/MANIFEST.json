@@ -51,6 +51,24 @@
       "recorded": null,
       "source": "hand-written",
       "notes": "Polymarket's actual 429 body has not been captured. The body text is a guess; the status code is what the tests care about."
+    },
+    "gamma_markets.json": {
+      "endpoint": "/markets",
+      "base_url": "https://gamma-api.polymarket.com",
+      "status": "unverified",
+      "records": 5,
+      "recorded": null,
+      "source": "hand-built from docs/data_dictionary.md field list + config/seeds.json",
+      "notes": "SHAPE ONLY - never cite this as evidence of what Gamma returns. The conditionId, question and date values are real: they are the three seed markets and the two control markets from config/seeds.json. Slugs for the two control markets were derived from their titles, because seeds.json does not record them. Every other value is synthetic. The five records deliberately vary in shape to exercise the coercion branches: string vs numeric liquidityNum/volumeNum, JSON-encoded vs real-list outcomes and clobTokenIds, tags on the market vs only on its parent event, eventSlug given directly vs via events[], a null createdAt, and liquidity/volume under the un-suffixed key names. Replace with a live recording: python tests/record_fixtures.py --endpoint /markets."
+    },
+    "gamma_events.json": {
+      "endpoint": "/events",
+      "base_url": "https://gamma-api.polymarket.com",
+      "status": "unverified",
+      "records": 3,
+      "recorded": null,
+      "source": "hand-built from docs/data_dictionary.md field list + config/seeds.json",
+      "notes": "SHAPE ONLY - never cite this as evidence of what Gamma returns. Parent events for the markets in gamma_markets.json, so the markets[].conditionId join can be tested. The Harris market in event 903 is invented, including its conditionId - it is there to give one event more than a single market. Event 5388 carries bare-string tags rather than tag objects, to exercise that branch of extract_tags(). Replace with a live recording: python tests/record_fixtures.py --endpoint /events."
     }
   }
 }
