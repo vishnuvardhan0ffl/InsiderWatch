@@ -1,0 +1,13 @@
+{
+  "started_at": "2026-09-09T21:12:13+00:00",
+  "finished_at": "2026-09-09T21:13:16+00:00",
+  "requested_duration_seconds": 60,
+  "market": "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21",
+  "attempts": 12,
+  "successful_calls": 12,
+  "failed_calls": 0,
+  "last_error": null,
+  "failure_log": "logs/api_failures.jsonl",
+  "completed_without_manual_intervention": true,
+  "pass": true
+}

@@ -1,0 +1,37 @@
+{
+  "body_bytes": 427549,
+  "body_path": "data\\cli_test_cache\\trades\\f8474f99286c87dec70df858e2db5deecca9b2e259d50bb25b9b0eadbb5dbe9b.json",
+  "body_sha256": "ccd3091e5d4fb4d2ee940187f040245fe543004fd0080212ace52df01e88e434",
+  "cache_format_version": 1,
+  "endpoint": "/trades",
+  "key": "f8474f99286c87dec70df858e2db5deecca9b2e259d50bb25b9b0eadbb5dbe9b",
+  "params": [
+    [
+      "end",
+      "1767830399"
+    ],
+    [
+      "limit",
+      "500"
+    ],
+    [
+      "market",
+      "0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21"
+    ],
+    [
+      "offset",
+      "500"
+    ],
+    [
+      "start",
+      "1767225600"
+    ],
+    [
+      "takerOnly",
+      "false"
+    ]
+  ],
+  "retrieved_at": "2026-09-09T23:15:28+00:00",
+  "status_code": 200,
+  "url": "https://data-api.polymarket.com/trades?end=1767830399&limit=500&market=0xd1e4e03a0129aad7b23e835bfb5c0166d7342fb98e91aa7dd0f3e6cb423d9c21&offset=500&start=1767225600&takerOnly=false"
+}

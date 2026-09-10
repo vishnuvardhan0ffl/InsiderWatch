@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "insiderwatch"
+version = "0.1.0"
+description = "CLI for the InsiderWatch prediction-market analysis project"
+requires-python = ">=3.10"
+
+[project.scripts]
+insiderwatch = "insiderwatch.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["insiderwatch*", "collectors*"]
